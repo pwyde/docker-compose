@@ -1,0 +1,82 @@
+version: "3.5"
+networks:
+  traefik_proxy:
+    external: true
+  docker_subnet:
+    external: true
+services:
+  rutorrent-flood:
+    image: romancin/rutorrent-flood:latest
+    container_name: rutorrent-flood
+    deploy:
+      resources:
+        limits:
+          cpus: "4.00"
+          memory: 4G
+        reservations:
+          cpus: "2.00"
+          memory: 2G
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    security_opt:
+      - seccomp="/etc/docker/seccomp/default.json"
+      - no-new-privileges
+    # Disables the user namespace for this container.
+    userns_mode: "host"
+    restart: on-failure:5
+    # If user namespaces is enabled, disable 'domainname' to avoid
+    # permission errors.
+    domainname: ${INTERNAL_DOMAIN}
+    hostname: rutorrent-flood
+    networks:
+      traefik_proxy:
+      docker_subnet:
+        ipv4_address: ${RTORRENT_IPV4}
+    volumes:
+      - ${DOCKER_DIR}/rutorrent-flood/config:/config
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}:/media
+    environment:
+      - PUID=1000
+      - PGID=1030
+      - TZ=${TZ}
+      - RT_TOKEN=${RT_TOKEN}
+      - RT_MASTERS=${RT_MASTERS}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.ruttorent.frontend=rutorrent"
+      - "traefik.rutorrent.frontend.rule=Host:rutorrent.${INTERNAL_DOMAIN}"
+      - "traefik.rutorrent.port=443"
+      - "traefik.rutorrent.protocol=https"
+      - "traefik.flood.frontend=flood"
+      - "traefik.flood.frontend.rule=Host:flood.${INTERNAL_DOMAIN}"
+      - "traefik.flood.port=3000"
+      - "traefik.flood.protocol=http"
+      - "traefik.docker.network=traefik_proxy"
+      # Sets the max-age of the STS header.
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      # Adds the IncludeSubdomains section of the STS header.
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      # Adds the preload flag to the STS header.
+      - "traefik.frontend.headers.STSPreload=true"
+      # Adds the STS header.
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      # Forces the frontend to redirect to SSL if a non-SSL request is sent.
+      - "traefik.frontend.headers.SSLRedirect=true"
+      # This setting configures the hostname that redirects will be based on.
+      - "traefik.frontend.headers.SSLHost=${INTERNAL_DOMAIN}"
+      # Adds the X-Frame-Options header with the value of DENY.
+      #- "traefik.frontend.headers.frameDeny=true" # Security header option 'customFrameOptionsValue' overrides this.
+      # Overrides the X-Frame-Options header with the custom value.
+      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${INTERNAL_DOMAIN}"
+      # Adds the X-XSS-Protection header with the value 1; mode=block.
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      # Adds the X-Content-Type-Options header with the value nosniff.
+      - "traefik.frontend.headers.contentTypeNosniff=true"
