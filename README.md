@@ -6,7 +6,7 @@ A collection of [**Docker Compose**](https://docs.docker.com/compose/) files to 
 ## Disclaimer
 All the compose files included in this repository is the author's personal preference to deploy application services on a Docker host system. This includes resource reservations and security settings specific for the Docker host. It does not suite all use cases and is subject to debate and changes in the future.
 
-## Usege
+## Usage
 Deploy a specific application service using the `docker-compose -f docker-compose.yml --compatibility up -d` command.
 
 To also stream the log output directly to the command-line of a starting service, deploy with the `docker-compose -f docker-compose.yml --compatibility up -d; docker-compose logs -tf --tail="50" <container name>` command.
