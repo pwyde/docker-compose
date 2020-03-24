@@ -1,0 +1,73 @@
+version: "3.5"
+networks:
+  traefik_proxy:
+    external: true
+  docker_subnet:
+    external: true
+services:
+  unifi-controller:
+    image: linuxserver/unifi-controller:latest
+    container_name: unifi-controller
+    deploy:
+      resources:
+        limits:
+          cpus: "2.00"
+          memory: 4G
+        reservations:
+          cpus: "1.00"
+          memory: 1G
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - seccomp="/etc/docker/seccomp/default.json"
+      - no-new-privileges
+    # Disables the user namespace for this container.
+    userns_mode: "host"
+    restart: on-failure:5
+    # If user namespaces is enabled, disable 'domainname' to avoid
+    # permission errors.
+    domainname: ${INTERNAL_DOMAIN}
+    hostname: unifi
+    networks:
+      traefik_proxy:
+      docker_subnet:
+        ipv4_address: ${UNIFICONTROLLER_IPV4]
+    volumes:
+      - ${DOCKER_DIR}/unifi-controller/config:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=unifi"
+      - "traefik.frontend.rule=Host:unifi.${INTERNAL_DOMAIN}"
+      - "traefik.port=8443"
+      - "traefik.protocol=https"
+      - "traefik.docker.network=traefik_proxy"
+      # Sets the max-age of the STS header.
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      # Adds the IncludeSubdomains section of the STS header.
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      # Adds the preload flag to the STS header.
+      - "traefik.frontend.headers.STSPreload=true"
+      # Adds the STS header.
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      # Forces the frontend to redirect to SSL if a non-SSL request is sent.
+      - "traefik.frontend.headers.SSLRedirect=true"
+      # This setting configures the hostname that redirects will be based on.
+      - "traefik.frontend.headers.SSLHost=${INTERNAL_DOMAIN}"
+      # Adds the X-Frame-Options header with the value of DENY.
+      #- "traefik.frontend.headers.frameDeny=true" # Security header option 'customFrameOptionsValue' overrides this.
+      # Overrides the X-Frame-Options header with the custom value.
+      - "traefik.frontend.headers.customFrameOptionsValue: allow-from https:${INTERNAL_DOMAIN}"
+      # Adds the X-XSS-Protection header with the value 1; mode=block.
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      # Adds the X-Content-Type-Options header with the value nosniff.
+      - "traefik.frontend.headers.contentTypeNosniff=true"
