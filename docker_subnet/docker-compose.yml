@@ -1,0 +1,28 @@
+# Stack for deploying subnet dedicated for Docker containers using macvlan.
+# Note that host must have a pre-configured macvlan interface before this stack
+# is deployed. See the 'create-macvlan' script for more information:
+# https://github.com/pwyde/create-macvlan
+#
+# Also note that this will output an error stating that 'scratch' is
+# a reserved name. This can be safely ignored. Scratch is a base image and
+# only used for defining the 'services' context in this Docker compose file.
+
+version: "2.2"
+networks:
+  docker_subnet:
+    name: docker_subnet
+    driver: macvlan
+    driver_opts:
+      parent: <parent interface name>
+    ipam:
+      config:
+        - subnet: <ipv4 network>/24
+          ip_range: <ipv4 network block>
+          gateway: <gateway ipv4 address>
+          aux_addresses:
+            host: <host ipv4 address>
+services:
+  scratch:
+    image: scratch
+    networks:
+      - docker_subnet
