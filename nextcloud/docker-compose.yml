@@ -48,8 +48,8 @@ services:
       - ${DOCKER_DIR}/nextcloud/config:/config
       - ${DOCKER_DIR}/nextcloud/data:/data
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${UID}
+      - PGID=${GID}
       - TZ=${TZ}
     labels:
       - "traefik.enable=true"
@@ -112,8 +112,8 @@ services:
     volumes:
       - ${DOCKER_DIR}/nextcloud/db:/config
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${UID}
+      - PGID=${GID}
       - TZ=${TZ}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=nextcloud
