@@ -44,8 +44,8 @@ services:
       - ${DOWNLOADS_DIR}:/downloads
       - ${MEDIA_DIR}:/media
     environment:
-      - PUID=1000
-      - PGID=1030
+      - PUID=${UID}
+      - PGID=${DOWNLOADS_GID}
       - TZ=${TZ}
       - RT_TOKEN=${RT_TOKEN}
       - RT_MASTERS=${RT_MASTERS}
