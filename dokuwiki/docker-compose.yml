@@ -44,8 +44,8 @@ services:
     volumes:
       - ${DOCKER_DIR}/dokuwiki/config:/config
     environment:
-      - PUID=${UID}
-      - PGID=${GID}
+      - PUID=1000
+      - PGID=1000
       - TZ=${TZ}
     labels:
       - "traefik.enable=true"
