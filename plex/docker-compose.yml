@@ -42,8 +42,8 @@ services:
       - ${DOCKER_DIR}/plex/transcode:/transcode
       - ${MEDIA_DIR}:/data/media
     environment:
-      - PLEX_UID=1000
-      - PLEX_GID=1000
+      - PLEX_UID=${UID}
+      - PLEX_GID=${GID}
       - TZ=${TZ}
       - ADVERTISE_IP="http://plex.${INTERNAL_DOMAIN}:32400/"
       - HOSTNAME="plex"
