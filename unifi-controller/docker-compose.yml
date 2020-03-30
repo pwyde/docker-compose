@@ -41,8 +41,8 @@ services:
     volumes:
       - ${DOCKER_DIR}/unifi-controller/config:/config
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${UID}
+      - PGID=${GID}
       - TZ=${TZ}
     labels:
       - "traefik.enable=true"
