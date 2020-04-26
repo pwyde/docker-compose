@@ -1,8 +1,8 @@
 # docker-compose
 
-<p align="center">
-  <img src=".artwork/banner.jpg" alt="Cargo ship with containers" />
-</p>
+<div align="center">
+  <img src=".artwork/banner.jpg" align="center" alt="Cargo ship with containers" />
+</div>
 
 ## Description
 A collection of [**Docker Compose**](https://docs.docker.com/compose/) files to configure various application services using Docker [containers](https://www.docker.com/products/container-runtime).
