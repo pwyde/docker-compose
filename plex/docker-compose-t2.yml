@@ -1,0 +1,62 @@
+version: "3.5"
+networks:
+  traefik_proxy:
+    external: true
+  docker_subnet:
+    external: true
+services:
+  plex:
+    image: plexinc/pms-docker:latest
+    container_name: plex
+    deploy:
+      resources:
+        limits:
+          cpus: "6.00"
+          memory: 4G
+        reservations:
+          cpus: "2.00"
+          memory: 2G
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    security_opt:
+      - seccomp="/etc/docker/seccomp/default.json"
+      - no-new-privileges
+    # Disables the user namespace for this container.
+    userns_mode: "host"
+    restart: on-failure:5
+    # If user namespaces is enabled, disable 'domainname' to avoid
+    # permission errors.
+    domainname: ${INTERNAL_DOMAIN}
+    hostname: plex
+    networks:
+      traefik_proxy:
+      docker_subnet:
+        ipv4_address: ${PLEX_IPV4}
+    volumes:
+      - ${DOCKER_DIR}/plex/config:/config
+      - ${DOCKER_DIR}/plex/transcode:/transcode
+      - ${MEDIA_DIR}:/data
+    environment:
+      - PLEX_UID=${UID}
+      - PLEX_GID=${GID}
+      - TZ=${TZ}
+      - ADVERTISE_IP="http://plex.${INTERNAL_DOMAIN}:32400/"
+      - HOSTNAME="plex"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_proxy"
+      # HTTP router - 'plex-rtr'.
+      - "traefik.http.routers.plex-rtr.entrypoints=https"
+      - "traefik.http.routers.plex-rtr.rule=Host(`plex.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.plex-rtr.tls=true"
+      # HTTP service - 'plex-svc'.
+      - "traefik.http.routers.plex-rtr.service=plex-svc"
+      - "traefik.http.services.plex-svc.loadbalancer.server.port=32400"
+      # Middlewares
+      - "traefik.http.routers.plex-rtr.middlewares=chain-no-auth@file"     # No authentication.
+      #- "traefik.http.routers.plex-rtr.middlewares=chain-basic-auth@file" # Basic authentication.

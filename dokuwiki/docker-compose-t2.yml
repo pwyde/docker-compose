@@ -1,0 +1,62 @@
+version: "3.5"
+networks:
+  traefik_proxy:
+    external: true
+  internal:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.6.0/24
+services:
+  dokuwiki:
+    image: linuxserver/dokuwiki:latest
+    container_name: dokuwiki
+    deploy:
+      resources:
+        limits:
+          cpus: "2.00"
+          memory: 1G
+        reservations:
+          cpus: "1.00"
+          memory: 512M
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    security_opt:
+      - seccomp="/etc/docker/seccomp/default.json"
+      - no-new-privileges
+    # Disables the user namespace for this container.
+    userns_mode: "host"
+    restart: on-failure:5
+    # If user namespaces is enabled, disable 'domainname' to avoid
+    # permission errors.
+    domainname: ${INTERNAL_DOMAIN}
+    hostname: dokuwiki
+    networks:
+      - traefik_proxy
+      - internal
+    volumes:
+      - ${DOCKER_DIR}/dokuwiki/config:/config
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_proxy"
+      # HTTP router - 'dokuwiki-rtr'.
+      - "traefik.http.routers.dokuwiki-rtr.entrypoints=https"
+      - "traefik.http.routers.dokuwiki-rtr.rule=Host(`dokuwiki.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.dokuwiki-rtr.tls=true"
+      # HTTP service - 'dokuwiki-svc'.
+      - "traefik.http.routers.dokuwiki-rtr.service=dokuwiki-svc"
+      - "traefik.http.services.dokuwiki-svc.loadbalancer.server.port=80"
+      # Middlewares
+      - "traefik.http.routers.dokuwiki-rtr.middlewares=chain-no-auth@file"     # No authentication.
+      #- "traefik.http.routers.dokuwiki-rtr.middlewares=chain-basic-auth@file" # Basic authentication.

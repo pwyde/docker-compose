@@ -1,0 +1,61 @@
+version: "3.5"
+networks:
+  traefik_proxy:
+    external: true
+  docker_subnet:
+    external: true
+services:
+  unifi-controller:
+    image: linuxserver/unifi-controller:latest
+    container_name: unifi-controller
+    deploy:
+      resources:
+        limits:
+          cpus: "2.00"
+          memory: 4G
+        reservations:
+          cpus: "1.00"
+          memory: 1G
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - seccomp="/etc/docker/seccomp/default.json"
+      - no-new-privileges
+    # Disables the user namespace for this container.
+    userns_mode: "host"
+    restart: on-failure:5
+    # If user namespaces is enabled, disable 'domainname' to avoid
+    # permission errors.
+    domainname: ${INTERNAL_DOMAIN}
+    hostname: unifi
+    networks:
+      traefik_proxy:
+      docker_subnet:
+        ipv4_address: ${UNIFICONTROLLER_IPV4}
+    volumes:
+      - ${DOCKER_DIR}/unifi-controller/config:/config
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_proxy"
+      # HTTP router - 'unifi-rtr'.
+      - "traefik.http.routers.unifi-rtr.entrypoints=https"
+      - "traefik.http.routers.unifi-rtr.rule=Host(`unifi.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.unifi-rtr.tls=true"
+      # HTTP service - 'unifi-svc'.
+      - "traefik.http.routers.unifi-rtr.service=unifi-svc"
+      # Force Traefik to use https over port 8443.
+      - "traefik.http.services.unifi-svc.loadbalancer.server.scheme=https"
+      - "traefik.http.services.unifi-svc.loadbalancer.server.port=8443"
+      # Middlewares
+      - "traefik.http.routers.unifi-rtr.middlewares=chain-no-auth@file"     # No authentication.
+      #- "traefik.http.routers.unifi-rtr.middlewares=chain-basic-auth@file" # Basic authentication.

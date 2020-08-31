@@ -1,0 +1,50 @@
+version: "3.5"
+networks:
+  traefik_proxy:
+    external: true
+  internal:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.2.0/24
+services:
+  portainer:
+    image: portainer/portainer:latest
+    container_name: portainer
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 256M
+        reservations:
+          cpus: "0.50"
+          memory: 128M
+    cap_drop:
+      - ALL
+    security_opt:
+      - seccomp="/etc/docker/seccomp/default.json"
+      - no-new-privileges
+    restart: on-failure:5
+    # If user namespaces is enabled, disable 'domainname' to avoid
+    # permission errors.
+    #domainname: ${INTERNAL_DOMAIN}
+    hostname: portainer
+    networks:
+      - traefik_proxy
+      - internal
+    read_only: true
+    volumes:
+      - ${DOCKER_DIR}/portainer/data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_proxy"
+      # HTTP router - 'portainer-rtr'.
+      - "traefik.http.routers.portainer-rtr.entrypoints=https"
+      - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.portainer-rtr.tls=true"
+      # HTTP service - 'portainer-svc'.
+      - "traefik.http.routers.portainer-rtr.service=portainer-svc"
+      - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
+      # Middlewares
+      - "traefik.http.routers.portainer-rtr.middlewares=chain-no-auth@file"     # No authentication.
+      #- "traefik.http.routers.portainer-rtr.middlewares=chain-basic-auth@file" # Basic authentication.

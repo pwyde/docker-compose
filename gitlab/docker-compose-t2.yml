@@ -1,0 +1,92 @@
+version: "3.5"
+networks:
+   traefik_proxy:
+     external: true
+   docker_subnet:
+    external: true
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    deploy:
+      resources:
+        limits:
+          cpus: "4.00"
+          memory: 4G
+        reservations:
+          cpus: "2.00"
+          memory: 2G
+    # At the time of writing there is no official documentation of which
+    # capabilities are required to have a fully working GitLab container.
+    #cap_drop:
+    #  - ALL
+    #cap_add:
+    security_opt:
+      - seccomp="/etc/docker/seccomp/default.json"
+      - no-new-privileges
+    # Disables the user namespace for this container.
+    userns_mode: "host"
+    restart: on-failure:5
+    # If user namespaces is enabled, disable 'domainname' to avoid
+    # permission errors.
+    domainname: ${INTERNAL_DOMAIN}
+    hostname: gitlab
+    networks:
+      traefik_proxy:
+      docker_subnet:
+        ipv4_address: ${GITLAB_IPV4}
+    volumes:
+      - ${DOCKER_DIR}/gitlab/config:/etc/gitlab
+      - ${DOCKER_DIR}/gitlab/logs:/var/log/gitlab
+      - ${DOCKER_DIR}/gitlab/data:/var/opt/gitlab
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        #
+        # GitLab settings.
+        #
+        external_url 'https://gitlab.${INTERNAL_DOMAIN}'
+        nginx['redirect_http_to_https'] = false
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+        # A minimum of 3 Puma workers is recommended for all machines that
+        # have 2GB+ of RAM.
+        puma['worker_processes'] = 3
+        puma['worker_timeout'] = 60
+        # Lowered from default value of 25.
+        sidekiq['concurrency'] = 15
+        # Recommend value is 1/4 of total RAM.
+        postgresql['shared_buffers'] = "512MB"
+        # Enable management of large files such as audio, video and graphics
+        # files.
+        gitlab_rails['lfs_enabled'] = true
+        # Limit backup lifetime to 5 days.
+        gitlab_rails['backup_keep_time'] = 432000
+        gitlab_rails['gitlab_ssh_host'] = 'gitlab-ssh.${INTERNAL_DOMAIN}'
+        gitlab_rails['time_zone'] = "${TZ}"
+        #
+        # Docker registry settings.
+        #
+        registry_external_url 'https://registry.${INTERNAL_DOMAIN}'
+        gitlab_rails['registry_enabled'] = true
+        registry_nginx['listen_port'] = 80
+        registry_nginx['listen_https'] = false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_proxy"
+      # HTTP router - 'gitlab-rtr'.
+      - "traefik.http.routers.gitlab-rtr.entrypoints=https"
+      - "traefik.http.routers.gitlab-rtr.rule=Host(`gitlab.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.gitlab-rtr.tls=true"
+      # HTTP service - 'gitlab-svc'.
+      - "traefik.http.routers.gitlab-rtr.service=gitlab-svc"
+      - "traefik.http.services.gitlab-svc.loadbalancer.server.port=80"
+      # HTTP router - 'registry-rtr'.
+      - "traefik.http.routers.registry-rtr.entrypoints=https"
+      - "traefik.http.routers.registry-rtr.rule=Host(`registry.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.registry-rtr.tls=true"
+      # HTTP service - 'registry-svc'.
+      - "traefik.http.routers.registry-rtr.service=registry-svc"
+      - "traefik.http.services.registry-svc.loadbalancer.server.port=80"
+      # Middlewares
+      - "traefik.http.routers.gitlab-rtr.middlewares=chain-no-auth@file"     # No authentication.
+      #- "traefik.http.routers.gitlab-rtr.middlewares=chain-basic-auth@file" # Basic authentication.
