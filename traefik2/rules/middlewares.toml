@@ -1,0 +1,64 @@
+[http.middlewares]
+  [http.middlewares.middlewares-basic-auth]
+    [http.middlewares.middlewares-basic-auth.basicAuth]
+      realm = "Traefik2 Basic Auth"
+      usersFile = "/secret/.htpasswd"
+
+  [http.middlewares.middlewares-rate-limit]
+    [http.middlewares.middlewares-rate-limit.rateLimit]
+      average = 100
+      burst = 50
+
+# Header Option
+#
+# For more information, see
+#   - https://docs.traefik.io/middlewares/headers/
+#   - https://docs.traefik.io/middlewares/headers/
+#   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
+#   - https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Clickjacking_Defense_Cheat_Sheet.md
+#
+# Examine and test applied headers here: https://observatory.mozilla.org/
+#
+# CAUTION: Any headers defined in the Docker Compose file (docker-compose.yml)
+# will OVERWRITE ALL of the headers defined below. Traefik cannot append what
+# is provided in the middlewares file with header options that are defined in
+# labes.
+  [http.middlewares.middlewares-secure-headers]
+    [http.middlewares.middlewares-secure-headers.headers]
+      accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
+      accessControlMaxAge = 100
+      hostsProxyHeaders = ["X-Forwarded-Host"]
+      sslRedirect = true
+      stsSeconds = 63072000
+      stsIncludeSubdomains = true
+      stsPreload = true
+      forceSTSHeader = true
+      # Overrided by the 'customFrameOptionsValue' option.
+      #frameDeny = true
+      # This overrides the 'FrameDeny' option.
+      customFrameOptionsValue = "allow-from https:example.com"
+      contentTypeNosniff = true 
+      browserXssFilter = true 
+      # These two options below add a little bit more security but will un-
+      # fortunately break some applications. This is because the 'sslHost'
+      # option requires a specific hostname. Hence a universal host cannot be
+      # used that will apply to all services behind Traefik.
+      #sslForceHost = true
+      #sslHost = "name.domain.tld"
+      referrerPolicy = "same-origin" 
+      # The 'contentSecurityPolicy' option is more secure but can break app-
+      # lications. Proper authentication will reduce the risk.
+      #contentSecurityPolicy = "frame-ancestors '*.domain.tld:*';object-src 'none';script-src 'none';"
+      featurePolicy = "camera 'none'; geolocation 'none'; microphone 'none'; payment 'none'; usb 'none'; vr 'none';" 
+      [http.middlewares.middlewares-secure-headers.headers.customResponseHeaders]
+        X-Robots-Tag = "none,noarchive,nosnippet,notranslate,noimageindex,"
+        server = ""
+
+# Redirects of CalDAV and CardDAV service discovery for Nextcloud container.
+  [http.middlewares.middlewares-nextcloud-dav]
+    [http.middlewares.middlewares-nextcloud-dav.replacePathRegex]
+      # Replaces '.well-known' paths for CalDAV and CardDAV with proper
+      # Nextcloud path.
+      regex = "^/.well-known/ca(l|rd)dav"
+      replacement = "/remote.php/dav/"
+
