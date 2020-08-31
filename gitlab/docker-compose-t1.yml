@@ -66,7 +66,7 @@ services:
         #
         # Docker registry settings.
         #
-        registry_external_url 'https://gitlab-registry.${INTERNAL_DOMAIN}'
+        registry_external_url 'https://registry.${INTERNAL_DOMAIN}'
         gitlab_rails['registry_enabled'] = true
         registry_nginx['listen_port'] = 80
         registry_nginx['listen_https'] = false
@@ -76,7 +76,7 @@ services:
       - "traefik.gitlab.frontend.rule=Host:gitlab.${INTERNAL_DOMAIN}"
       - "traefik.gitlab.port=80"
       # Settings for the Docker registry.
-      - "traefik.registry.frontend.rule=Host:gitlab-registry.${INTERNAL_DOMAIN}"
+      - "traefik.registry.frontend.rule=Host:registry.${INTERNAL_DOMAIN}"
       - "traefik.registry.port=80"
       - "traefik.docker.network=traefik_proxy"
       # Sets the max-age of the STS header.

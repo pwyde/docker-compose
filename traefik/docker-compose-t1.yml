@@ -10,7 +10,7 @@ networks:
         - subnet: 172.20.1.0/24
 services:
   traefik:
-    image: traefik:v1.7
+    image: traefik:maroilles
     container_name: traefik
     deploy:
       resources:
@@ -43,7 +43,7 @@ services:
       #- /var/run/docker.sock:/var/run/docker.sock:ro
       - ${DOCKER_DIR}/traefik/config:/etc/traefik
       - ${DOCKER_DIR}/traefik/secret:/secret:ro
-      - ${DOCKER_DIR}/traefik/certs:/certs:ro
+      - ${DOCKER_DIR}/traefik/certs:/certs
     environment:
       - CF_API_EMAIL=${CF_API_EMAIL}
       - CF_API_KEY=${CF_API_KEY}

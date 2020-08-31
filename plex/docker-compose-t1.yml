@@ -40,7 +40,7 @@ services:
     volumes:
       - ${DOCKER_DIR}/plex/config:/config
       - ${DOCKER_DIR}/plex/transcode:/transcode
-      - ${MEDIA_DIR}:/data/media
+      - ${MEDIA_DIR}:/data
     environment:
       - PLEX_UID=${UID}
       - PLEX_GID=${GID}

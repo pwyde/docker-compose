@@ -137,7 +137,7 @@ services:
       - no-new-privileges
     # Disables the user namespace for this container.
     userns_mode: "host"
-    user: "1002:1002"
+    user: "${CONTAINER_UID}:${CONTAINER_GID}"
     restart: on-failure:5
     hostname: nextcloud-redis
     networks:
