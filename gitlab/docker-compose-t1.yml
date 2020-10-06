@@ -1,3 +1,4 @@
+# This Docker Compose file is for Traefik v1 and is not actively maintained.
 version: "3.5"
 networks:
    traefik_proxy:
@@ -61,7 +62,6 @@ services:
         gitlab_rails['lfs_enabled'] = true
         # Limit backup lifetime to 5 days.
         gitlab_rails['backup_keep_time'] = 432000
-        gitlab_rails['gitlab_ssh_host'] = 'gitlab-ssh.${INTERNAL_DOMAIN}'
         gitlab_rails['time_zone'] = "${TZ}"
         #
         # Docker registry settings.
