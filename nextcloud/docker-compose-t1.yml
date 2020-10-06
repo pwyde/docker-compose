@@ -1,3 +1,4 @@
+# This Docker Compose file is for Traefik v1 and is not actively maintained.
 version: "3.5"
 networks:
   traefik_proxy:
@@ -115,9 +116,9 @@ services:
       - PUID=${UID}
       - PGID=${GID}
       - TZ=${TZ}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
   nextcloud-redis:
     image: redis:alpine
