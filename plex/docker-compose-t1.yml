@@ -37,7 +37,9 @@ services:
     networks:
       traefik_proxy:
       docker_subnet:
-        ipv4_address: ${PLEX_IPV4}
+        # Configure static IP for container. This makes Plex available outside
+        # of internal network using port forwarding in firewall.
+        ipv4_address: ${PLEX_IP}
     volumes:
       - ${DOCKER_DIR}/plex/config:/config
       - ${DOCKER_DIR}/plex/transcode:/transcode
@@ -46,7 +48,7 @@ services:
       - PLEX_UID=${UID}
       - PLEX_GID=${GID}
       - TZ=${TZ}
-      - ADVERTISE_IP="http://plex.${INTERNAL_DOMAIN}:32400/"
+      - ADVERTISE_IP="http://${PLEX_IP}:32400/"
       - HOSTNAME="plex"
     labels:
       - "traefik.enable=true"
