@@ -35,7 +35,7 @@ services:
     networks:
       traefik_proxy:
       docker_subnet:
-        ipv4_address: ${GITLAB_IPV4}
+        ipv4_address: ${GITLAB_IP}
     volumes:
       - ${DOCKER_DIR}/gitlab/config:/etc/gitlab
       - ${DOCKER_DIR}/gitlab/logs:/var/log/gitlab
