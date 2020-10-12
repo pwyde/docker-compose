@@ -7,6 +7,11 @@ networks:
     ipam:
       config:
         - subnet: 172.20.3.0/24
+secrets:
+  mysql_root_password:
+    file: ${SECRETS_DIR}/mysql_root_password
+  mysql_password:
+    file: ${SECRETS_DIR}/mysql_password
 services:
   nextcloud:
     image: linuxserver/nextcloud:latest
@@ -57,7 +62,7 @@ services:
       - "traefik.docker.network=traefik_proxy"
       # HTTP router - 'nextcloud-rtr'.
       - "traefik.http.routers.nextcloud-rtr.entrypoints=https"
-      - "traefik.http.routers.nextcloud-rtr.rule=Host(`nextcloud.$EXTERNAL_DOMAIN`)"
+      - "traefik.http.routers.nextcloud-rtr.rule=Host(`nextcloud.${EXTERNAL_DOMAIN}`)"
       - "traefik.http.routers.nextcloud-rtr.tls=true"
       # HTTP service - 'nextcloud-svc'.
       - "traefik.http.routers.nextcloud-rtr.service=nextcloud-svc"
@@ -102,10 +107,13 @@ services:
       - PUID=${UID}
       - PGID=${GID}
       - TZ=${TZ}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - FILE__MYSQL_ROOT_PASSWORD=/run/secrets/mysql_root_password
+      - FILE__MYSQL_PASSWORD=/run/secrets/mysql_password
+    secrets:
+      - mysql_root_password
+      - mysql_password
   nextcloud-redis:
     image: redis:alpine
     container_name: nextcloud-redis
