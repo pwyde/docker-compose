@@ -1,7 +1,7 @@
 [http.middlewares]
   [http.middlewares.middlewares-basic-auth]
     [http.middlewares.middlewares-basic-auth.basicAuth]
-      realm = "Traefik2 Basic Auth"
+      realm = "Traefik Basic Auth"
       usersFile = "/secret/.htpasswd"
 
   [http.middlewares.middlewares-rate-limit]
