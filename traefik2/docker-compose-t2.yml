@@ -8,10 +8,15 @@ networks:
     ipam:
       config:
         - subnet: 172.20.1.0/24
+secrets:
+  cloudflare_email:
+    file: ${SECRETS_DIR}/cloudflare_email
+  cloudflare_api_key:
+    file: ${SECRETS_DIR}/cloudflare_api_key
 services:
-  traefik2:
+  traefik:
     image: traefik:chevrotin # 'chevrotin' tag refers to v2.2.x
-    container_name: traefik2
+    container_name: traefik
     deploy:
       resources:
         limits:
@@ -29,10 +34,10 @@ services:
     # If user namespaces is enabled, disable 'domainname' to avoid
     # permission errors.
     #domainname: ${INTERNAL_DOMAIN}
-    hostname: traefik2
+    hostname: traefik
     networks:
       docker_subnet:
-        ipv4_address: ${TRAEFIK_IPV4}
+        ipv4_address: ${TRAEFIK_IP}
       traefik_proxy:
     ports:
       - target: 80
@@ -51,16 +56,19 @@ services:
     volumes:
       # Do not expose Docker daemon socket.
       #- /var/run/docker.sock:/var/run/docker.sock:ro
-      - ${DOCKER_DIR}/traefik2/certs:/certs
-      - ${DOCKER_DIR}/traefik2/rules:/rules
-      - ${DOCKER_DIR}/traefik2/secret:/secret:ro
-      - ${DOCKER_DIR}/traefik2/traefik.log:/traefik.log
+      - ${DOCKER_DIR}/traefik/certs:/certs
+      - ${DOCKER_DIR}/traefik/rules:/rules
+      - ${DOCKER_DIR}/traefik/secret:/secret:ro
+      - ${DOCKER_DIR}/traefik/traefik.log:/traefik.log
     sysctls:
       # Allow an unprivileged user to listen on any port.
       net.ipv4.ip_unprivileged_port_start: "0"
     environment:
-      - CF_API_EMAIL=${CF_API_EMAIL}
-      - CF_API_KEY=${CF_API_KEY}
+      - CF_API_EMAIL_FILE=/run/secrets/cloudflare_email
+      - CF_API_KEY_FILE=/run/secrets/cloudflare_api_key
+    secrets:
+      - cloudflare_email
+      - cloudflare_api_key
     command:
       - --global.checkNewVersion=true
       - --global.sendAnonymousUsage=false
@@ -87,7 +95,7 @@ services:
       # Do not use Docker daemon socket.
       #- --providers.docker.endpoint=unix:///var/run/docker.sock
       # Connect to Docker daemon using TCP.
-      - --providers.docker.endpoint=tcp://chost.$INTERNAL_DOMAIN:2376
+      - --providers.docker.endpoint=tcp://${HOSTNAME}.${INTERNAL_DOMAIN}:2376
       # Enable Docker over TLS.
       - --providers.docker.tls.ca=/certs/docker/ca.pem
       - --providers.docker.tls.cert=/certs/docker/cert.pem
@@ -95,17 +103,17 @@ services:
       - --providers.docker.tls.insecureSkipVerify=false
       # If no routing rule is defined by label, it is defined by the default
       # rule below.
-      #- --providers.docker.defaultRule=Host(`{{ index .Labels "com.docker.compose.service" }}.$INTERNAL_DOMAIN`)
+      #- --providers.docker.defaultRule=Host(`{{ index .Labels "com.docker.compose.service" }}.${INTERNAL_DOMAIN}`)
       # Hide all Docker containers that do not have the 'traefik.enable=true'
       # labet set.
       - --providers.docker.exposedByDefault=false
       # Add 'dns-cloudflare' as default certificate resolver for all services.
       # Also enables TLS and no need to specify on individual services.
       - --entrypoints.https.http.tls.certresolver=dns-cloudflare
-      - --entrypoints.https.http.tls.domains[0].main=$EXTERNAL_DOMAIN   # Pull certificate for external domain.
-      - --entrypoints.https.http.tls.domains[0].sans=*.$EXTERNAL_DOMAIN # Pull wildcard certificate for external domain.
-      - --entrypoints.https.http.tls.domains[1].main=$INTERNAL_DOMAIN   # Pull certificate for internal domain.
-      - --entrypoints.https.http.tls.domains[1].sans=*.$INTERNAL_DOMAIN # Pull wildcard certificate for internal domain.
+      - --entrypoints.https.http.tls.domains[0].main=${EXTERNAL_DOMAIN}   # Pull certificate for external domain.
+      - --entrypoints.https.http.tls.domains[0].sans=*.${EXTERNAL_DOMAIN} # Pull wildcard certificate for external domain.
+      - --entrypoints.https.http.tls.domains[1].main=${INTERNAL_DOMAIN}   # Pull certificate for internal domain.
+      - --entrypoints.https.http.tls.domains[1].sans=*.${INTERNAL_DOMAIN} # Pull wildcard certificate for internal domain.
       - --providers.docker.network=traefik_proxy
       - --providers.docker.swarmMode=false
       # Load dynamic configuration from one or more .toml or .yml files in a
@@ -118,7 +126,7 @@ services:
       ## Define certificate resolver with the name 'dns-cloudflare'.
       # Use ACME staging. Remove comment to use stage servers.
       #- --certificatesResolvers.dns-cloudflare.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
-      - --certificatesResolvers.dns-cloudflare.acme.email=$CF_API_EMAIL
+      - --certificatesResolvers.dns-cloudflare.acme.email=${CLOUDFLARE_EMAIL}
       - --certificatesResolvers.dns-cloudflare.acme.storage=/certs/acme/acme.json
       - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
       # Remove comment to use Cloudflare DNS for ACME DNS challenge.
@@ -134,8 +142,9 @@ services:
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       # HTTP router - 'traefik-rtr'.
       - "traefik.http.routers.traefik-rtr.entrypoints=https"
-      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.${INTERNAL_DOMAIN}`)"
       # HTTP service - Traefik dashboard (API).
       - "traefik.http.routers.traefik-rtr.service=api@internal"
+      - "traefik.http.services.api@internal.loadbalancer.server.port=8080"
       # Middlewares.
       - "traefik.http.routers.traefik-rtr.middlewares=chain-basic-auth@file"
