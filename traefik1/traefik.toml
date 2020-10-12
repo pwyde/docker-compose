@@ -24,8 +24,8 @@ InsecureSkipVerify = true
   # Do not use Docker daemon socket.
   #endpoint = "unix:///var/run/docker.sock"
   # Connect to Docker daemon using TCP.
-  endpoint = "tcp://chost.$INTERNAL_DOMAIN:2376"
-  domain = "$INTERNAL_DOMAIN"
+  endpoint = "tcp://${HOSTNAME}.${INTERNAL_DOMAIN}:2376"
+  domain = "${INTERNAL_DOMAIN}"
   watch = true
   # Hide all Docker containers that do not have the 'traefik.enable=true'
   # labet set.
@@ -58,7 +58,7 @@ InsecureSkipVerify = true
 
 # Configure Let's Encrypt (ACME) certificate authority.
 [acme]
-  email = "$CF_API_EMAIL"
+  email = "${CF_API_EMAIL}"
   storage="/certs/acme/acme.json"
   entryPoint = "https"
   acmeLogging = true
@@ -68,6 +68,6 @@ InsecureSkipVerify = true
   provider = "cloudflare"
   delayBeforeCheck = 300
 [[acme.domains]]
-   main = "*.$EXTERNAL_DOMAIN"
+   main = "*.${EXTERNAL_DOMAIN}"
 [[acme.domains]]
-   main = "*.$INTERNAL_DOMAIN"
+   main = "*.${INTERNAL_DOMAIN}"
