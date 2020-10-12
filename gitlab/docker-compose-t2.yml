@@ -34,7 +34,7 @@ services:
     networks:
       traefik_proxy:
       docker_subnet:
-        ipv4_address: ${GITLAB_IPV4}
+        ipv4_address: ${GITLAB_IP}
     volumes:
       - ${DOCKER_DIR}/gitlab/config:/etc/gitlab
       - ${DOCKER_DIR}/gitlab/logs:/var/log/gitlab
@@ -75,14 +75,14 @@ services:
       - "traefik.docker.network=traefik_proxy"
       # HTTP router - 'gitlab-rtr'.
       - "traefik.http.routers.gitlab-rtr.entrypoints=https"
-      - "traefik.http.routers.gitlab-rtr.rule=Host(`gitlab.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.gitlab-rtr.rule=Host(`gitlab.${INTERNAL_DOMAIN}`)"
       - "traefik.http.routers.gitlab-rtr.tls=true"
       # HTTP service - 'gitlab-svc'.
       - "traefik.http.routers.gitlab-rtr.service=gitlab-svc"
       - "traefik.http.services.gitlab-svc.loadbalancer.server.port=80"
       # HTTP router - 'registry-rtr'.
       - "traefik.http.routers.registry-rtr.entrypoints=https"
-      - "traefik.http.routers.registry-rtr.rule=Host(`registry.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.registry-rtr.rule=Host(`registry.${INTERNAL_DOMAIN}`)"
       - "traefik.http.routers.registry-rtr.tls=true"
       # HTTP service - 'registry-svc'.
       - "traefik.http.routers.registry-rtr.service=registry-svc"
