@@ -40,7 +40,7 @@ services:
       - "traefik.docker.network=traefik_proxy"
       # HTTP router - 'portainer-rtr'.
       - "traefik.http.routers.portainer-rtr.entrypoints=https"
-      - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.${INTERNAL_DOMAIN}`)"
       - "traefik.http.routers.portainer-rtr.tls=true"
       # HTTP service - 'portainer-svc'.
       - "traefik.http.routers.portainer-rtr.service=portainer-svc"
