@@ -5,6 +5,11 @@ networks:
     external: true
   docker_subnet:
     external: true
+secrets:
+  rt_token:
+    file: ${SECRETS_DIR}/rt_token
+  rt_masters:
+    file: ${SECRETS_DIR}/rt_masters
 services:
   rutorrent-flood:
     image: romancin/rutorrent-flood:latest
@@ -39,7 +44,9 @@ services:
     networks:
       traefik_proxy:
       docker_subnet:
-        ipv4_address: ${RTORRENT_IPV4}
+        # Configure static IP for container. This makes rTorrent available
+        # outside of internal network using port forwarding in firewall.
+        ipv4_address: ${RTORRENT_IP}
     volumes:
       - ${DOCKER_DIR}/rutorrent-flood/config:/config
       - ${DOWNLOADS_DIR}:/downloads
@@ -48,8 +55,11 @@ services:
       - PUID=${UID}
       - PGID=${DOWNLOADS_GID}
       - TZ=${TZ}
-      - RT_TOKEN=${RT_TOKEN}
-      - RT_MASTERS=${RT_MASTERS}
+      - FILE__RT_TOKEN=/run/secrets/rt_token
+      - FILE__RT_MASTERS=/run/secrets/rt_masters
+    secrets:
+      - rt_token
+      - rt_masters
     labels:
       - "traefik.enable=true"
       - "traefik.ruttorent.frontend=rutorrent"
