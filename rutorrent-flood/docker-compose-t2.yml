@@ -4,6 +4,11 @@ networks:
     external: true
   docker_subnet:
     external: true
+secrets:
+  rt_token:
+    file: ${SECRETS_DIR}/rt_token
+  rt_masters:
+    file: ${SECRETS_DIR}/rt_masters
 services:
   rutorrent-flood:
     image: romancin/rutorrent-flood:latest
@@ -38,7 +43,9 @@ services:
     networks:
       traefik_proxy:
       docker_subnet:
-        ipv4_address: ${RTORRENT_IPV4}
+        # Configure static IP for container. This makes rTorrent available
+        # outside of internal network using port forwarding in firewall.
+        ipv4_address: ${RTORRENT_IP}
     volumes:
       - ${DOCKER_DIR}/rutorrent-flood/config:/config
       - ${DOWNLOADS_DIR}:/downloads
@@ -47,14 +54,17 @@ services:
       - PUID=${UID}
       - PGID=${DOWNLOADS_GID}
       - TZ=${TZ}
-      - RT_TOKEN=${RT_TOKEN}
-      - RT_MASTERS=${RT_MASTERS}
+      - FILE__RT_TOKEN=/run/secrets/rt_token
+      - FILE__RT_MASTERS=/run/secrets/rt_masters
+    secrets:
+      - rt_token
+      - rt_masters
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_proxy"
       # HTTP router - 'rutorrent-rtr'.
       - "traefik.http.routers.rutorrent-rtr.entrypoints=https"
-      - "traefik.http.routers.rutorrent-rtr.rule=Host(`rutorrent.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.rutorrent-rtr.rule=Host(`rutorrent.${INTERNAL_DOMAIN}`)"
       - "traefik.http.routers.rutorrent-rtr.tls=true"
       # HTTP service - 'rutorrent-svc'.
       - "traefik.http.routers.rutorrent-rtr.service=rutorrent-svc"
@@ -63,7 +73,7 @@ services:
       - "traefik.http.services.rutorrent-svc.loadbalancer.server.port=443"
       # HTTP router - 'flood-rtr'.
       - "traefik.http.routers.flood-rtr.entrypoints=https"
-      - "traefik.http.routers.flood-rtr.rule=Host(`flood.$INTERNAL_DOMAIN`)"
+      - "traefik.http.routers.flood-rtr.rule=Host(`flood.${INTERNAL_DOMAIN}`)"
       - "traefik.http.routers.flood-rtr.tls=true"
       # HTTP service - 'flood-svc'.
       - "traefik.http.routers.flood-rtr.service=flood-svc"
