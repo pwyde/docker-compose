@@ -38,7 +38,20 @@ services:
     networks:
       traefik_proxy:
       docker_subnet:
-        ipv4_address: ${UNIFI_IPV4]
+        # Configure static IP for container. This exposes ports directly on
+        # the container, instead of mapping ports to host.
+        # 
+        # UniFi Controller Ports:
+        #   - 3478/udp: Unifi STUN port.
+        #   - 10001/udp: Required for AP discovery.
+        #   - 8080: Required for device communication.
+        #   - 8443: Unifi web admin port.
+        #   - 1900/udp: Required for 'Make controller discoverable on L2 network' option.
+        #   - 8843: Unifi guest portal HTTPS redirect port.
+        #   - 8880: Unifi guest portal HTTP redirect port.
+        #   - 6789: For mobile throughput test.
+        #   - 5514: Remote syslog port.
+        ipv4_address: ${UNIFI_IP}
     volumes:
       - ${DOCKER_DIR}/unifi-controller/config:/config
     environment:
