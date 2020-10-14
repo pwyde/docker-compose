@@ -75,6 +75,7 @@ services:
       - --entryPoints.http.address=:80
       - --entryPoints.https.address=:443
       - --entryPoints.traefik.address=:8080
+      - --entryPoints.ssh.address=:22
       - --api=true
       # Put Traefik dashboard (API) behind authentication.
       #- --api.insecure=true
