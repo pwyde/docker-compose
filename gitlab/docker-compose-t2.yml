@@ -45,6 +45,7 @@ services:
         # GitLab settings.
         #
         external_url 'https://gitlab.${INTERNAL_DOMAIN}'
+        # Do not redirect to HTTPS. Traefik does this for us instead.
         nginx['redirect_http_to_https'] = false
         nginx['listen_port'] = 80
         nginx['listen_https'] = false
@@ -61,8 +62,9 @@ services:
         gitlab_rails['lfs_enabled'] = true
         # Limit backup lifetime to 5 days.
         gitlab_rails['backup_keep_time'] = 432000
-        gitlab_rails['gitlab_ssh_host'] = 'gitlab-ssh.${INTERNAL_DOMAIN}'
         gitlab_rails['time_zone'] = "${TZ}"
+        # SSH settings.
+        gitlab_rails['gitlab_shell_ssh_port'] = 22
         #
         # Docker registry settings.
         #
@@ -87,6 +89,14 @@ services:
       # HTTP service - 'registry-svc'.
       - "traefik.http.routers.registry-rtr.service=registry-svc"
       - "traefik.http.services.registry-svc.loadbalancer.server.port=80"
+      # TCP router - 'gitlab-ssh'.
+      # Unable to filter TCP traffic on SNI. For more information, see
+      # https://community.containo.us/t/routing-ssh-traffic-with-traefik-v2/717/6
+      - "traefik.tcp.routers.gitlab-ssh.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.gitlab-ssh.entrypoints=ssh"
+      - "traefik.tcp.routers.gitlab-ssh.service=gitlab-ssh-svc"
+      # TCP service - 'gitlab-ssh-svc'.
+      - "traefik.tcp.services.gitlab-ssh-svc.loadbalancer.server.port=22"
       # Middlewares
       - "traefik.http.routers.gitlab-rtr.middlewares=chain-no-auth@file"     # No authentication.
       #- "traefik.http.routers.gitlab-rtr.middlewares=chain-basic-auth@file" # Basic authentication.
