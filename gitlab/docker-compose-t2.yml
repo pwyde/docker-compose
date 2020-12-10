@@ -1,9 +1,12 @@
 version: "3.5"
 networks:
-   traefik_proxy:
-     external: true
-   docker_subnet:
+  traefik_proxy:
     external: true
+  internal:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.4.0/24
 services:
   gitlab:
     image: gitlab/gitlab-ce:latest
@@ -32,9 +35,8 @@ services:
     domainname: ${INTERNAL_DOMAIN}
     hostname: gitlab
     networks:
-      traefik_proxy:
-      docker_subnet:
-        ipv4_address: ${GITLAB_IP}
+      - traefik_proxy
+      - internal
     volumes:
       - ${DOCKER_DIR}/gitlab/config:/etc/gitlab
       - ${DOCKER_DIR}/gitlab/logs:/var/log/gitlab
