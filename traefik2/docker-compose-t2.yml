@@ -134,6 +134,9 @@ services:
       #- --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
       # Delay DNS check and reduce Let's Encrypt hitrate.
       - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90
+      # Disables the need to wait for the propagation of the TXT record to all
+      # authoritative name servers.
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.disablePropagationCheck=true
     labels:
       - "traefik.enable=true"
       # Redirect HTTP to HTTPS using router named 'http-catchall'.
