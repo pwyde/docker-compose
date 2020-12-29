@@ -62,7 +62,7 @@ services:
       - "traefik.docker.network=traefik_proxy"
       # HTTP router - 'unifi-rtr'.
       - "traefik.http.routers.unifi-rtr.entrypoints=https"
-      - "traefik.http.routers.unifi-rtr.rule=Host(`unifi.${INTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.unifi-rtr.rule=Host(`unifi-ui.${INTERNAL_DOMAIN}`)"
       - "traefik.http.routers.unifi-rtr.tls=true"
       # HTTP service - 'unifi-svc'.
       - "traefik.http.routers.unifi-rtr.service=unifi-svc"
