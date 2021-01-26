@@ -1,0 +1,13 @@
+[http.routers]
+  [http.routers.unifi-rtr]
+      entryPoints = ["https"]
+      rule = "Host(`unifi-ui.${INTERNAL_DOMAIN}`)"
+      service = "unifi-svc"
+      middlewares = ["chain-no-auth"]
+      [http.routers.unifi-rtr.tls]
+        certresolver = "dns-cloudflare"
+
+[http.services]
+  [http.services.unifi-svc]
+    [[http.services.unifi-svc.loadBalancer.servers]]
+      url = "https://${UNIFI_CK_IP}"
