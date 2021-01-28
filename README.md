@@ -273,7 +273,7 @@ Configure owner and permissions with commands below.
 ```
 
 ## Non-Docker or External Application Services
-Traefik v2 can also be used to proxy traffic for non-Docker application services or external devices. This is perfoermed by adding a dynamic router rule to the `${DOCKER_DIR}/traefik2/rules` directory using the Traefik [**file provider**](https://doc.traefik.io/traefik/v2.0/providers/file/).
+Traefik v2 can also be used to proxy traffic for non-Docker application services or external devices. This is perfoermed by adding a dynamic router rule to the [`${DOCKER_DIR}/traefik2/rules`](./traefik2/rules/) directory using the Traefik [**file provider**](https://doc.traefik.io/traefik/v2.0/providers/file/).
 
 This repository contains rules for [Pi-hole](https://pi-hole.net/) and [UniFi Cloud Key/UniFi Network Controller](https://unifi-protect.ui.com/cloud-key-gen2). Please note that environment variables are not applied to `.toml` files and must be editied before implementation.
 
